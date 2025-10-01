@@ -11,6 +11,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // routes
+// Route de santé pour tester la connexion
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        message: 'Backend fonctionne !', 
+        database: mongoose.connection.readyState === 1 ? 'Connectée' : 'Déconnectée',
+        timestamp: new Date().toISOString()
+    });
+});
 
 // app.use('/api/users', require('./routes/userRoutes'));
 // app.use('/api/exercises', require('./routes/exerciseRoutes'));
