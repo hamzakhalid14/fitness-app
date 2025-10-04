@@ -4,8 +4,6 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
-const router = express.Router();
-
 //inscription
 
 router.post('/register', async (req, res) => {
@@ -18,11 +16,10 @@ router.post('/register', async (req, res) => {
         if(userExists) {
             return res.status(400).json({ message: 'Username or email already exists' });
         }
-        const user = new user({
+        const user = new User({
             username,
             email,
-            password,
-            profile
+            password
         });
         await user.save();
         //generer un token
