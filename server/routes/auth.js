@@ -64,4 +64,58 @@ router.get('/profile', auth, async (req, res) => {
     res.json(req.user);
 });
 
+// mettre à jour le profil
+router.put('/profile', auth, async (req, res) => {
+    try {
+        const { username, email, profile } = req.body;
+        
+        // Vérifier si le nom d'utilisateur ou l'email existe déjà (sauf pour l'utilisateur actuel)
+        const existingUser = await User.findOne({
+            $and: [
+                { _id: { $ne: req.user._id } },
+                { $or: [{ email }, { username }] }
+            ]
+        });
+        
+        if (existingUser) {
+            return res.status(400).json({ message: 'Ce nom d\'utilisateur ou cet email est déjà utilisé' });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            { username, email, profile },
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        res.json(updatedUser);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erreur du serveur' });
+    }
+});
+
+// changer le mot de passe
+router.put('/change-password', auth, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        
+        // Vérifier le mot de passe actuel
+        const user = await User.findById(req.user._id);
+        const isMatch = await user.correctPassword(currentPassword, user.password);
+        
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Mot de passe actuel incorrect' });
+        }
+
+        // Mettre à jour le mot de passe
+        user.password = newPassword;
+        await user.save();
+
+        res.json({ message: 'Mot de passe modifié avec succès' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erreur du serveur' });
+    }
+});
+
 module.exports = router;
