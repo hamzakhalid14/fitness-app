@@ -22,6 +22,7 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/exercises', require('./routes/exercises'));
+app.use('/api/workouts', require('./routes/workouts'));
 
 //connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/fitness-app')

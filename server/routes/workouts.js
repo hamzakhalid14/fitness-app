@@ -1,7 +1,7 @@
 const express = require('express');
 const Exercise = require('../models/Exercise');
 const auth = require('../middleware/auth');
-const Workout = require('../models/Workout');
+const Workout = require('../models/wourkout');
 const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
