@@ -24,13 +24,14 @@ router.get('/', auth, async (req, res) => {
 // exercice par id
 router.get('/:id', auth, async (req, res) => {
     try {
-        const exercise = await Exercise.findById({
-      _id: req.params.id,
-      $or: [
-        { isPublic: true },
-        { createdBy: req.user._id }
-      ]
-    }).populate('createdBy', 'username ');
+        const exercise = await Exercise.findOne({
+            _id: req.params.id,
+            $or: [
+                { isPublic: true },
+                { createdBy: req.user._id }
+            ]
+        }).populate('createdBy', 'username');
+        
         if (!exercise) {
             return res.status(404).json({ message: 'Exercice non trouvé' });
         }
@@ -49,13 +50,18 @@ router.post('/', auth, async (req, res) => {
             createdBy: req.user._id
         });
         await newExercise.save();
-        await newExercise.populate('createdBy', 'username ');
+        await newExercise.populate('createdBy', 'username');
         res.status(201).json(newExercise);
     } catch (error) {
-        console.error(error);
+        console.error('Erreur création exercice:', error);
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ 
+                message: 'Données invalides', 
+                errors: Object.values(error.errors).map(e => e.message) 
+            });
+        }
         res.status(500).json({ message: 'Erreur du serveur' });
     }
-
 });
 // mettre a jour un exercice
 router.put('/:id', auth, async (req, res) => {
@@ -63,31 +69,43 @@ router.put('/:id', auth, async (req, res) => {
         const exercise = await Exercise.findOneAndUpdate(
             { _id: req.params.id, createdBy: req.user._id },
             req.body,
-            { new: true , runValidators: true }).populate('createdBy', 'username ');
+            { new: true, runValidators: true }
+        ).populate('createdBy', 'username');
+        
         if (!exercise) {
             return res.status(404).json({ message: 'Exercice non trouvé ou non autorisé' });
         }
         res.json(exercise);
     } catch (error) {
-        console.error(error);
-        res.status(400).json({ message: 'Erreur du serveur' });
+        console.error('Erreur modification exercice:', error);
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ 
+                message: 'Données invalides', 
+                errors: Object.values(error.errors).map(e => e.message) 
+            });
+        }
+        res.status(500).json({ message: 'Erreur du serveur' });
     }
 });
 
 
 // supprimer un exercice
 router.delete('/:id', auth, async (req, res) => {
-    try{
-        const exercise = await Exercise.findOneAndDelete({ _id: req.params.id, createdBy: req.user._id });
-        if(!exercise) {
+    try {
+        const exercise = await Exercise.findOneAndDelete({ 
+            _id: req.params.id, 
+            createdBy: req.user._id 
+        });
+        
+        if (!exercise) {
             return res.status(404).json({ message: 'Exercice non trouvé ou non autorisé' });
         }
-    }
-    catch(error) {
+        
+        res.json({ message: 'Exercice supprimé' });
+    } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erreur du serveur' });
     }
-    res.json({ message: 'Exercice supprimé' });
 });
 
 module.exports = router;

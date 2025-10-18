@@ -12,10 +12,7 @@ import {
   TextField,
   InputAdornment,
   Fab,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  
   MenuItem,
   Select,
   FormControl,
@@ -26,8 +23,12 @@ import {
   Add,
   FitnessCenter,
   AccessTime,
-  LocalFireDepartment
+  LocalFireDepartment,
+  Edit,
+  Delete
 } from '@mui/icons-material';
+import ExerciseForm from '../components/exercises/ExerciseForm';
+import { exercisesAPI } from '../services/api';
 
 const Exercises = () => {
   const [exercises, setExercises] = useState([]);
@@ -35,60 +36,23 @@ const Exercises = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [openDialog, setOpenDialog] = useState(false);
-  const [newExercise, setNewExercise] = useState({
-    name: '',
-    category: '',
-    muscleGroup: '',
-    description: '',
-    difficulty: 'beginner'
-  });
+  const [editingExercise, setEditingExercise] = useState(null);
 
-  // Données d'exemple
+  // charger depuis l'API
   useEffect(() => {
-    const sampleExercises = [
-      {
-        id: 1,
-        name: 'Push-ups',
-        category: 'Force',
-        muscleGroup: 'Pectoraux, Triceps',
-        description: 'Exercice de base pour le haut du corps',
-        difficulty: 'beginner',
-        duration: '30 sec',
-        calories: 50
-      },
-      {
-        id: 2,
-        name: 'Squats',
-        category: 'Force',
-        muscleGroup: 'Quadriceps, Fessiers',
-        description: 'Exercice fondamental pour les jambes',
-        difficulty: 'beginner',
-        duration: '45 sec',
-        calories: 60
-      },
-      {
-        id: 3,
-        name: 'Burpees',
-        category: 'Cardio',
-        muscleGroup: 'Corps entier',
-        description: 'Exercice intense pour tout le corps',
-        difficulty: 'advanced',
-        duration: '60 sec',
-        calories: 100
-      },
-      {
-        id: 4,
-        name: 'Planche',
-        category: 'Core',
-        muscleGroup: 'Abdominaux, Core',
-        description: 'Renforcement du centre du corps',
-        difficulty: 'intermediate',
-        duration: '60 sec',
-        calories: 40
+    const load = async () => {
+      try {
+        const data = await exercisesAPI.getAll();
+        // API peut renvoyer un tableau dans data.exercises ou data
+        const list = Array.isArray(data) ? data : data.exercises || [];
+        setExercises(list);
+        setFilteredExercises(list);
+      } catch (err) {
+        console.error('Erreur en chargeant les exercices', err);
       }
-    ];
-    setExercises(sampleExercises);
-    setFilteredExercises(sampleExercises);
+    };
+
+    load();
   }, []);
 
   // Filtrage des exercices
@@ -130,22 +94,48 @@ const Exercises = () => {
   };
 
   const handleAddExercise = () => {
-    if (newExercise.name && newExercise.category && newExercise.muscleGroup) {
-      const exercise = {
-        id: exercises.length + 1,
-        ...newExercise,
-        duration: '30 sec',
-        calories: 50
-      };
-      setExercises([...exercises, exercise]);
-      setNewExercise({
-        name: '',
-        category: '',
-        muscleGroup: '',
-        description: '',
-        difficulty: 'beginner'
-      });
+    setEditingExercise(null);
+    setOpenDialog(true);
+  };
+
+  const handleSaveExercise = async (form) => {
+    try {
+      if (editingExercise && editingExercise._id) {
+        const updated = await exercisesAPI.update(editingExercise._id, form);
+        setExercises(prev => prev.map(e => (e._id === updated._id ? updated : e)));
+      } else {
+        const created = await exercisesAPI.create(form);
+        setExercises(prev => [created, ...prev]);
+      }
       setOpenDialog(false);
+      setEditingExercise(null);
+    } catch (err) {
+      console.error('Erreur sauvegarde exercice', err);
+      let errorMessage = 'Erreur lors de la sauvegarde';
+      
+      if (err.errors && Array.isArray(err.errors)) {
+        errorMessage = err.errors.join(', ');
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      alert(errorMessage);
+    }
+  };
+
+  const handleEdit = (exercise) => {
+    setEditingExercise(exercise);
+    setOpenDialog(true);
+  };
+
+  const handleDelete = async (exercise) => {
+    if (!window.confirm('Supprimer cet exercice ?')) return;
+    try {
+      await exercisesAPI.delete(exercise._id || exercise.id);
+      setExercises(prev => prev.filter(e => (e._id || e.id) !== (exercise._id || exercise.id)));
+    } catch (err) {
+      console.error('Erreur suppression', err);
+      alert(err.message || 'Impossible de supprimer');
     }
   };
 
@@ -199,7 +189,12 @@ const Exercises = () => {
           <Button size="small" startIcon={<FitnessCenter />}>
             Ajouter au workout
           </Button>
-          <Button size="small">Détails</Button>
+          <Button size="small" onClick={() => handleEdit(exercise)} startIcon={<Edit />}>
+            Modifier
+          </Button>
+          <Button size="small" color="error" onClick={() => handleDelete(exercise)} startIcon={<Delete />}>
+            Supprimer
+          </Button>
         </CardActions>
       </Card>
     </Grid>
@@ -252,7 +247,7 @@ const Exercises = () => {
       {/* Liste des exercices */}
       <Grid container spacing={3}>
         {filteredExercises.map((exercise) => (
-          <ExerciseCard key={exercise.id} exercise={exercise} />
+          <ExerciseCard key={exercise._id || exercise.id} exercise={exercise} />
         ))}
       </Grid>
 
@@ -272,80 +267,18 @@ const Exercises = () => {
         color="primary"
         aria-label="add"
         sx={{ position: 'fixed', bottom: 16, right: 16 }}
-        onClick={() => setOpenDialog(true)}
+        onClick={handleAddExercise}
       >
         <Add />
       </Fab>
 
       {/* Dialog d'ajout d'exercice */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Ajouter un nouvel exercice</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Nom de l'exercice"
-            fullWidth
-            variant="outlined"
-            value={newExercise.name}
-            onChange={(e) => setNewExercise({...newExercise, name: e.target.value})}
-            sx={{ mb: 2 }}
-          />
-          
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Catégorie</InputLabel>
-            <Select
-              value={newExercise.category}
-              label="Catégorie"
-              onChange={(e) => setNewExercise({...newExercise, category: e.target.value})}
-            >
-              <MenuItem value="Force">Force</MenuItem>
-              <MenuItem value="Cardio">Cardio</MenuItem>
-              <MenuItem value="Core">Core</MenuItem>
-              <MenuItem value="Flexibility">Flexibilité</MenuItem>
-            </Select>
-          </FormControl>
-          
-          <TextField
-            margin="dense"
-            label="Groupe musculaire"
-            fullWidth
-            variant="outlined"
-            value={newExercise.muscleGroup}
-            onChange={(e) => setNewExercise({...newExercise, muscleGroup: e.target.value})}
-            sx={{ mb: 2 }}
-          />
-          
-          <TextField
-            margin="dense"
-            label="Description"
-            fullWidth
-            multiline
-            rows={3}
-            variant="outlined"
-            value={newExercise.description}
-            onChange={(e) => setNewExercise({...newExercise, description: e.target.value})}
-            sx={{ mb: 2 }}
-          />
-          
-          <FormControl fullWidth>
-            <InputLabel>Difficulté</InputLabel>
-            <Select
-              value={newExercise.difficulty}
-              label="Difficulté"
-              onChange={(e) => setNewExercise({...newExercise, difficulty: e.target.value})}
-            >
-              <MenuItem value="beginner">Débutant</MenuItem>
-              <MenuItem value="intermediate">Intermédiaire</MenuItem>
-              <MenuItem value="advanced">Avancé</MenuItem>
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Annuler</Button>
-          <Button onClick={handleAddExercise} variant="contained">Ajouter</Button>
-        </DialogActions>
-      </Dialog>
+      <ExerciseForm
+        open={openDialog}
+        onClose={() => { setOpenDialog(false); setEditingExercise(null); }}
+        onSave={handleSaveExercise}
+        initialData={editingExercise || {}}
+      />
     </Container>
   );
 };

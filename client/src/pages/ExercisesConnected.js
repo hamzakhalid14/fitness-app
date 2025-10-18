@@ -68,7 +68,7 @@ const ExercisesConnected = () => {
           {
             _id: '1',
             name: 'Push-ups',
-            category: 'Force',
+            category: 'force',
             muscleGroup: 'Pectoraux, Triceps',
             description: 'Exercice de base pour le haut du corps',
             difficulty: 'beginner'
@@ -76,7 +76,7 @@ const ExercisesConnected = () => {
           {
             _id: '2',
             name: 'Squats',
-            category: 'Force',
+            category: 'force',
             muscleGroup: 'Quadriceps, Fessiers',
             description: 'Exercice fondamental pour les jambes',
             difficulty: 'beginner'
@@ -84,7 +84,7 @@ const ExercisesConnected = () => {
           {
             _id: '3',
             name: 'Burpees',
-            category: 'Cardio',
+            category: 'cardio',
             muscleGroup: 'Corps entier',
             description: 'Exercice intense pour tout le corps',
             difficulty: 'advanced'
@@ -92,7 +92,7 @@ const ExercisesConnected = () => {
           {
             _id: '4',
             name: 'Planche',
-            category: 'Core',
+            category: 'core',
             muscleGroup: 'Abdominaux, Core',
             description: 'Renforcement du centre du corps',
             difficulty: 'intermediate'
@@ -420,10 +420,10 @@ const ExercisesConnected = () => {
               label="Catégorie"
               onChange={(e) => setNewExercise({...newExercise, category: e.target.value})}
             >
-              <MenuItem value="Force">Force</MenuItem>
-              <MenuItem value="Cardio">Cardio</MenuItem>
-              <MenuItem value="Core">Core</MenuItem>
-              <MenuItem value="Flexibility">Flexibilité</MenuItem>
+              <MenuItem value="force">Force</MenuItem>
+              <MenuItem value="cardio">Cardio</MenuItem>
+              <MenuItem value="core">Core</MenuItem>
+              <MenuItem value="flexibility">Flexibilité</MenuItem>
             </Select>
           </FormControl>
           

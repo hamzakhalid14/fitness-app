@@ -12,15 +12,11 @@ const exerciseSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['cardio', 'force', 'flexibilité'],
+    enum: ['cardio', 'force', 'core', 'flexibility'],
     required: true
   },
   muscleGroup: {
     type: String,
-    enum: [
-      'pectoraux', 'dos', 'épaules', 'biceps', 'triceps',
-      'jambes', 'abdominaux', 'fessiers', 'cardio', 'full-body'
-    ],
     required: true
   },
   equipment: {
@@ -30,8 +26,8 @@ const exerciseSchema = new mongoose.Schema({
   },
   difficulty: {
     type: String,
-    enum: ['débutant', 'intermédiaire', 'avancé'],
-    default: 'débutant'
+    enum: ['beginner', 'intermediate', 'advanced'],
+    default: 'beginner'
   },
   instructions: [String],
   videoUrl: String,
