@@ -108,4 +108,47 @@ router.delete('/:id', auth, async (req, res) => {
     }
 });
 
+// Créer plusieurs exercices en une fois
+router.post('/bulk', auth, async (req, res) => {
+    try {
+        // Vérifier que req.body est un tableau
+        if (!Array.isArray(req.body)) {
+            return res.status(400).json({ 
+                message: 'Le body doit être un tableau d\'exercices' 
+            });
+        }
+
+        // Ajouter createdBy à chaque exercice
+        const exercisesWithUser = req.body.map(exercise => ({
+            ...exercise,
+            createdBy: req.user._id
+        }));
+
+        // Insérer tous les exercices
+        const savedExercises = await Exercise.insertMany(exercisesWithUser, { 
+            runValidators: true 
+        });
+
+        // Populer les informations utilisateur
+        await Exercise.populate(savedExercises, { 
+            path: 'createdBy', 
+            select: 'username' 
+        });
+
+        res.status(201).json({
+            message: `${savedExercises.length} exercices créés avec succès`,
+            exercises: savedExercises
+        });
+    } catch (error) {
+        console.error('Erreur création exercices en lot:', error);
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ 
+                message: 'Données invalides', 
+                errors: Object.values(error.errors).map(e => e.message) 
+            });
+        }
+        res.status(500).json({ message: 'Erreur du serveur' });
+    }
+});
+
 module.exports = router;

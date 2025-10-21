@@ -16,7 +16,9 @@ import {
   TextField,
   Fab,
   Snackbar,
-  Alert
+  Alert,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   PlayArrow,
@@ -25,8 +27,10 @@ import {
   Add,
   Timer,
   FitnessCenter,
-  Check
+  Check,
+  List as ListIcon
 } from '@mui/icons-material';
+import WorkoutList from '../components/workout/WorkoutList';
 
 const Workout = () => {
   const [currentWorkout, setCurrentWorkout] = useState(null);
@@ -38,6 +42,7 @@ const Workout = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [newWorkout, setNewWorkout] = useState({ name: '', exercises: [] });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [tabValue, setTabValue] = useState(0); // Nouvel état pour les onglets
 
   // Données d'exemple pour les templates de workout
   useEffect(() => {
@@ -265,6 +270,10 @@ const Workout = () => {
     );
   };
 
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ mb: 4 }}>
@@ -272,17 +281,44 @@ const Workout = () => {
           Mes Workouts
         </Typography>
         <Typography variant="subtitle1" color="text.secondary">
-          Choisissez un workout ou créez le vôtre
+          Gérez vos entraînements
         </Typography>
       </Box>
 
-      <ActiveWorkoutPanel />
+      {/* Onglets */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label="workout tabs">
+          <Tab 
+            label="Mes Entraînements" 
+            icon={<ListIcon />} 
+            iconPosition="start"
+          />
+          <Tab 
+            label="Templates" 
+            icon={<FitnessCenter />} 
+            iconPosition="start"
+          />
+        </Tabs>
+      </Box>
 
-      <Grid container spacing={3}>
-        {workoutTemplates.map((workout) => (
-          <WorkoutCard key={workout.id} workout={workout} />
-        ))}
-      </Grid>
+      {/* Contenu des onglets */}
+      {tabValue === 0 && (
+        <Box>
+          <WorkoutList />
+        </Box>
+      )}
+
+      {tabValue === 1 && (
+        <Box>
+          <ActiveWorkoutPanel />
+
+          <Grid container spacing={3}>
+            {workoutTemplates.map((workout) => (
+              <WorkoutCard key={workout.id} workout={workout} />
+            ))}
+          </Grid>
+        </Box>
+      )}
 
       {workoutTemplates.length === 0 && (
         <Box sx={{ textAlign: 'center', mt: 4 }}>
