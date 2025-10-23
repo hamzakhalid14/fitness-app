@@ -8,6 +8,10 @@ import Dashboard from './pages/Dashboard';
 import ExercisesConnected from './pages/ExercisesConnected';
 import Workout from './pages/Workout';
 import MyWorkouts from './pages/MyWorkouts';
+import WorkoutPage from './pages/WorkoutPage';
+import CreateWorkout from './pages/CreateWorkout';
+import ViewWorkout from './pages/ViewWorkout';
+import EditWorkout from './pages/EditWorkout';
 import Auth from './pages/Auth';
 
 const theme = createTheme({
@@ -49,6 +53,10 @@ function App() {
               <Route path="exercises" element={<ExercisesConnected />} />
               <Route path="workout" element={<Workout />} />
               <Route path="my-workouts" element={<MyWorkouts />} />
+              <Route path="create-workout" element={<CreateWorkout />} />
+              <Route path="view-workout/:id" element={<ViewWorkout />} />
+              <Route path="edit-workout/:id" element={<EditWorkout />} />
+              <Route path="workout-manager" element={<WorkoutPage />} />
             </Route>
           </Routes>
         </Router>

@@ -20,7 +20,8 @@ import {
   BarChart,
   Group,
   Logout,
-  List as ListIcon
+  List as ListIcon,
+  Add
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
@@ -30,6 +31,7 @@ const menuItems = [
   { text: 'Dashboard', icon: <Dashboard />, path: '/' },
   { text: 'Entraînement', icon: <FitnessCenter />, path: '/workout' },
   { text: 'Mes Workouts', icon: <ListIcon />, path: '/my-workouts' },
+  { text: 'Créer Workout', icon: <Add />, path: '/create-workout' },
   { text: 'Exercices', icon: <CalendarToday />, path: '/exercises' },
   { text: 'Progrès', icon: <BarChart />, path: '/progress' },
   { text: 'Communauté', icon: <Group />, path: '/community' }

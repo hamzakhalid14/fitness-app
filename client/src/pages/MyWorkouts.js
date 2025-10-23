@@ -1,36 +1,41 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
-  Typography,
-  Box,
+  Grid,
   Card,
   CardContent,
-  Grid,
-  Chip,
+  Typography,
   Button,
+  Box,
+  Chip,
   CircularProgress,
   Alert,
+  IconButton,
+  Tooltip,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  IconButton,
-  Tooltip
+  Paper
 } from '@mui/material';
 import {
   FitnessCenter,
   Timer,
   LocalFireDepartment,
-  Delete,
+  Visibility,
   Edit,
-  Visibility
+  Delete,
+  Add
 } from '@mui/icons-material';
-import axios from 'axios';
+import WorkoutDisplay from '../components/workout/WorkoutDisplay';
+import Layout from '../layout/Layout';
 
 const MyWorkouts = () => {
+  const navigate = useNavigate();
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -115,7 +120,15 @@ const MyWorkouts = () => {
             {workouts.length} entraînement(s) dans votre base de données
           </Typography>
         </Box>
-        <Box>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Button 
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => navigate('/create-workout')}
+            sx={{ mr: 2 }}
+          >
+            Créer un entraînement
+          </Button>
           <Button 
             variant={viewMode === 'cards' ? 'contained' : 'outlined'}
             onClick={() => setViewMode('cards')}
@@ -197,12 +210,18 @@ const MyWorkouts = () => {
 
                       <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
                         <Tooltip title="Voir détails">
-                          <IconButton size="small">
+                          <IconButton 
+                            size="small"
+                            onClick={() => navigate(`/view-workout/${workout._id}`)}
+                          >
                             <Visibility />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Modifier">
-                          <IconButton size="small">
+                          <IconButton 
+                            size="small"
+                            onClick={() => navigate(`/edit-workout/${workout._id}`)}
+                          >
                             <Edit />
                           </IconButton>
                         </Tooltip>
@@ -269,12 +288,18 @@ const MyWorkouts = () => {
                       <TableCell>
                         <Box sx={{ display: 'flex', gap: 0.5 }}>
                           <Tooltip title="Voir">
-                            <IconButton size="small">
+                            <IconButton 
+                              size="small"
+                              onClick={() => navigate(`/view-workout/${workout._id}`)}
+                            >
                               <Visibility />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="Modifier">
-                            <IconButton size="small">
+                            <IconButton 
+                              size="small"
+                              onClick={() => navigate(`/edit-workout/${workout._id}`)}
+                            >
                               <Edit />
                             </IconButton>
                           </Tooltip>

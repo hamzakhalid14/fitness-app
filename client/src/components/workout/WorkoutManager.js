@@ -18,12 +18,12 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Checkbox,
   List,
   ListItem,
   ListItemText,
   ListItemButton,
   ListItemIcon,
-  Checkbox,
   Paper,
   Snackbar
 } from '@mui/material';
@@ -37,11 +37,12 @@ import {
   Visibility,
   Add,
   Close,
-  Save
+  Save,
+  Remove
 } from '@mui/icons-material';
 import { workoutsAPI, exercisesAPI } from '../../services/api';
 
-const WorkoutList = () => {
+const WorkoutManager = () => {
   const [workouts, setWorkouts] = useState([]);
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +56,8 @@ const WorkoutList = () => {
     name: '',
     duration: '',
     calories: '',
-    notes: ''
+    notes: '',
+    exercises: []
   });
 
   useEffect(() => {
@@ -69,14 +71,41 @@ const WorkoutList = () => {
         workoutsAPI.getAll(),
         exercisesAPI.getAll()
       ]);
-      setWorkouts(workoutsResponse);
-      setExercises(exercisesResponse);
+      setWorkouts(workoutsResponse.data);
+      setExercises(exercisesResponse.data);
     } catch (error) {
       console.error('Erreur lors de la récupération des données:', error);
       setError('Impossible de charger les données');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCreateWorkout = () => {
+    setEditingWorkout(null);
+    setWorkoutForm({
+      name: '',
+      duration: '',
+      calories: '',
+      notes: '',
+      exercises: []
+    });
+    setSelectedExercises([]);
+    setOpenDialog(true);
+  };
+
+  const handleEditWorkout = (workout) => {
+    setEditingWorkout(workout);
+    setWorkoutForm({
+      name: workout.name,
+      duration: workout.duration || '',
+      calories: workout.calories || '',
+      notes: workout.notes || '',
+      exercises: workout.exercises || []
+    });
+    const selectedIds = workout.exercises?.map(ex => ex.exercise._id || ex.exercise) || [];
+    setSelectedExercises(selectedIds);
+    setOpenDialog(true);
   };
 
   const handleDeleteWorkout = async (workoutId) => {
@@ -90,31 +119,6 @@ const WorkoutList = () => {
         showSnackbar('Erreur lors de la suppression', 'error');
       }
     }
-  };
-
-  const handleCreateWorkout = () => {
-    setEditingWorkout(null);
-    setWorkoutForm({
-      name: '',
-      duration: '',
-      calories: '',
-      notes: ''
-    });
-    setSelectedExercises([]);
-    setOpenDialog(true);
-  };
-
-  const handleEditWorkout = (workout) => {
-    setEditingWorkout(workout);
-    setWorkoutForm({
-      name: workout.name,
-      duration: workout.duration || '',
-      calories: workout.calories || '',
-      notes: workout.notes || ''
-    });
-    const selectedIds = workout.exercises?.map(ex => ex.exercise._id || ex.exercise) || [];
-    setSelectedExercises(selectedIds);
-    setOpenDialog(true);
   };
 
   const handleSaveWorkout = async () => {
@@ -141,11 +145,11 @@ const WorkoutList = () => {
       let response;
       if (editingWorkout) {
         response = await workoutsAPI.update(editingWorkout._id, workoutData);
-        setWorkouts(workouts.map(w => w._id === editingWorkout._id ? response : w));
+        setWorkouts(workouts.map(w => w._id === editingWorkout._id ? response.data : w));
         showSnackbar('Entraînement modifié avec succès', 'success');
       } else {
         response = await workoutsAPI.create(workoutData);
-        setWorkouts([...workouts, response]);
+        setWorkouts([...workouts, response.data]);
         showSnackbar('Entraînement créé avec succès', 'success');
       }
 
@@ -170,11 +174,6 @@ const WorkoutList = () => {
     setSnackbar({ open: true, message, severity });
   };
 
-  const getExerciseName = (exerciseId) => {
-    const exercise = exercises.find(ex => ex._id === exerciseId);
-    return exercise ? exercise.name : 'Exercice inconnu';
-  };
-
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('fr-FR', {
       day: '2-digit',
@@ -191,6 +190,11 @@ const WorkoutList = () => {
 
   const getCompletionText = (completed) => {
     return completed ? 'Terminé' : 'En cours';
+  };
+
+  const getExerciseName = (exerciseId) => {
+    const exercise = exercises.find(ex => ex._id === exerciseId);
+    return exercise ? exercise.name : 'Exercice inconnu';
   };
 
   if (loading) {
@@ -251,7 +255,6 @@ const WorkoutList = () => {
             <Grid item xs={12} sm={6} md={4} key={workout._id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1 }}>
-                  {/* En-tête du workout */}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
                     <Typography variant="h6" component="h2" sx={{ fontWeight: 'bold' }}>
                       {workout.name}
@@ -263,7 +266,6 @@ const WorkoutList = () => {
                     />
                   </Box>
 
-                  {/* Informations principales */}
                   <Box sx={{ mb: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <Timer sx={{ mr: 1, fontSize: 20, color: 'text.secondary' }} />
@@ -289,12 +291,36 @@ const WorkoutList = () => {
                     </Box>
                   </Box>
 
-                  {/* Date */}
+                  {workout.exercises && workout.exercises.length > 0 && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="caption" color="textSecondary">
+                        Exercices:
+                      </Typography>
+                      <Box sx={{ mt: 1 }}>
+                        {workout.exercises.slice(0, 3).map((exerciseEntry, index) => (
+                          <Chip
+                            key={index}
+                            label={exerciseEntry.exercise?.name || getExerciseName(exerciseEntry.exercise)}
+                            size="small"
+                            variant="outlined"
+                            sx={{ mr: 0.5, mb: 0.5 }}
+                          />
+                        ))}
+                        {workout.exercises.length > 3 && (
+                          <Chip
+                            label={`+${workout.exercises.length - 3} autres`}
+                            size="small"
+                            variant="outlined"
+                          />
+                        )}
+                      </Box>
+                    </Box>
+                  )}
+
                   <Typography variant="caption" color="textSecondary">
                     {formatDate(workout.date)}
                   </Typography>
 
-                  {/* Notes si disponibles */}
                   {workout.notes && (
                     <Box sx={{ mt: 2 }}>
                       <Divider sx={{ mb: 1 }} />
@@ -304,7 +330,6 @@ const WorkoutList = () => {
                     </Box>
                   )}
 
-                  {/* Progress bar pour les exercices terminés */}
                   {workout.exercises && workout.exercises.length > 0 && (
                     <Box sx={{ mt: 2 }}>
                       <Typography variant="caption" color="textSecondary">
@@ -319,7 +344,6 @@ const WorkoutList = () => {
                   )}
                 </CardContent>
 
-                {/* Actions */}
                 <Box sx={{ p: 2, pt: 0 }}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button 
@@ -358,7 +382,6 @@ const WorkoutList = () => {
         </Grid>
       )}
 
-      {/* Dialog de création/édition de workout */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -448,6 +471,7 @@ const WorkoutList = () => {
                       key={exerciseId}
                       label={getExerciseName(exerciseId)}
                       onDelete={() => handleExerciseToggle(exerciseId)}
+                      deleteIcon={<Remove />}
                       sx={{ mr: 1, mb: 1 }}
                     />
                   ))}
@@ -469,7 +493,6 @@ const WorkoutList = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar pour les notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
@@ -486,4 +509,4 @@ const WorkoutList = () => {
   );
 };
 
-export default WorkoutList;
+export default WorkoutManager;
